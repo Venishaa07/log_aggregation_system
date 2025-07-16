@@ -1,0 +1,19 @@
+- name: Deploy ELK Stack on Kubernetes
+  hosts: elk-master
+  become: yes
+  tasks:
+    - name: Copy YAML files
+      copy:
+        src: files/
+        dest: /home/ubuntu/elk/
+
+    - name: Apply ELK manifests
+      shell: |
+        kubectl apply -f /home/ubuntu/elk/elasticsearch-deployment.yaml
+        kubectl apply -f /home/ubuntu/elk/elasticsearch-service.yaml
+        kubectl apply -f /home/ubuntu/elk/kibana-deployment.yaml
+        kubectl apply -f /home/ubuntu/elk/kibana-service.yaml
+        kubectl create configmap logstash-config --from-file=/home/ubuntu/elk/logstash.conf || true
+        kubectl apply -f /home/ubuntu/elk/logstash-deployment.yaml
+        kubectl apply -f /home/ubuntu/elk/logstash-service.yaml
+

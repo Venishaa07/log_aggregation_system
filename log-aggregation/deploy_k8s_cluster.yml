@@ -1,0 +1,37 @@
+- name: Initialize Kubernetes cluster on master
+  hosts: elk-master
+  become: yes
+  tasks:
+    - name: Init cluster using kubeadm
+      shell: kubeadm init --pod-network-cidr=192.168.0.0/16
+      register: init_output
+      ignore_errors: true
+
+    - name: Create .kube config for admin user
+      shell: |
+        mkdir -p $HOME/.kube
+        cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+        chown $(id -u):$(id -g) $HOME/.kube/config
+      when: init_output.rc == 0
+
+    - name: Install Calico CNI
+      shell: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico.yaml
+      when: init_output.rc == 0
+
+    - name: Save join command
+      shell: kubeadm token create --print-join-command
+      register: join_command
+      when: init_output.rc == 0
+
+    - name: Set fact for join command
+      set_fact:
+        kube_join_cmd: "{{ join_command.stdout }}"
+      when: init_output.rc == 0
+
+- name: Join workers to cluster
+  hosts: elk-workers
+  become: yes
+  tasks:
+    - name: Join worker node to cluster
+      shell: "{{ hostvars['elk-master']['kube_join_cmd'] }} --ignore-preflight-errors=all"
+

@@ -1,0 +1,12 @@
+- name: Deploy Filebeat on Kubernetes
+  hosts: elk-master
+  become: yes
+  tasks:
+    - name: Copy Filebeat YAML
+      copy:
+        src: files/filebeat-kubernetes.yaml
+        dest: /home/ubuntu/filebeat-kubernetes.yaml
+
+    - name: Apply Filebeat configuration
+      shell: kubectl apply -f /home/ubuntu/filebeat-kubernetes.yaml
+

@@ -1,0 +1,14 @@
+- name: Deploy Log Generator App (Flask) on Kubernetes
+  hosts: elk-master
+  become: yes
+  tasks:
+    - name: Copy Log App YAML files
+      copy:
+        src: files/
+        dest: /home/ubuntu/logapp/
+
+    - name: Apply logapp deployment and service
+      shell: |
+        kubectl apply -f /home/ubuntu/logapp/logapp-deployment.yaml
+        kubectl apply -f /home/ubuntu/logapp/logapp-service.yaml
+
